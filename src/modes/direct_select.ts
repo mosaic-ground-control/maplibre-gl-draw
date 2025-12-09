@@ -13,11 +13,15 @@ import { moveFeatures } from "../lib/move_features.ts";
 import { ModeInterface } from "./mode_interface.ts";
 import { modes } from "../constants.ts";
 import { ModeBase } from "./mode_base.ts";
-
+import {Marker} from "maplibre-gl";
 const isVertex = isOfMetaType(Constants.meta.VERTEX);
 const isMidpoint = isOfMetaType(Constants.meta.MIDPOINT);
+import trash from "../trash.svg";
 
 export class DirectSelect extends ModeBase implements ModeInterface {
+  private marker: Marker | undefined;
+  private markerCoordPath: string | undefined;
+
   // Internal methods
   fireUpdate() {
     this.fire(Constants.events.UPDATE, {
@@ -44,6 +48,11 @@ export class DirectSelect extends ModeBase implements ModeInterface {
   stopDragging(state) {
     if (state.canDragMove && state.initialDragPanState === true) {
       this.map.dragPan.enable();
+    }
+    if (this.marker) {
+        const pixelPoint = this.map.project(state.feature.getCoordinate(this.markerCoordPath))
+        const markerPos = this.map.unproject([pixelPoint.x + 48,pixelPoint.y])
+        this.marker.setLngLat(markerPos)
     }
     state.dragMoving = false;
     state.canDragMove = false;
@@ -122,6 +131,12 @@ export class DirectSelect extends ModeBase implements ModeInterface {
         coord[1] + constrainedDelta.lat,
       );
     }
+
+    if (this.marker) {
+      const pixelPoint = this.map.project(state.feature.getCoordinate(this.markerCoordPath))
+      const markerPos = this.map.unproject([pixelPoint.x + 48,pixelPoint.y])
+      this.marker.setLngLat(markerPos)
+    }
   }
 
   // Feature interaction handlers
@@ -133,6 +148,10 @@ export class DirectSelect extends ModeBase implements ModeInterface {
       state.selectedCoordPaths = [about.coord_path];
     } else if (isShiftDown(e) && selectedIndex === -1) {
       state.selectedCoordPaths.push(about.coord_path);
+    }
+
+    if (state.feature.coordinates[0].length > 3) {
+        this.createMarker(about, state, e);
     }
 
     const selectedCoordinates = this.pathsToCoordinates(
@@ -148,16 +167,69 @@ export class DirectSelect extends ModeBase implements ModeInterface {
     state.feature.addCoordinate(about.coord_path, about.lng, about.lat);
     this.fireUpdate();
     state.selectedCoordPaths = [about.coord_path];
+
+    if (state.feature.coordinates[0].length > 3) {
+      this.createMarker(about, state, e);
+    }
   }
+
+    private createMarker(about, state, e) {
+        this.marker?.remove()
+        this.marker = undefined;
+        this.markerCoordPath = about.coord_path;
+        const el = document.createElement('div');
+        el.style.cssText=`
+            cursor: pointer;
+            display: flex;
+            width: 15px;
+            height: 15px;
+            justify-content: center;
+            align-items: center;
+            border-radius: var(--radius-xs, 16px);
+            border: 1px solid black;
+            background-color: black;
+            color: white;
+            padding: 4px;
+        `;
+        el.onmouseenter = () => {
+            el.style.color = "#C9FB02FF"
+        }
+        el.onmouseleave = () => {
+            el.style.color = "white"
+        }
+        el.innerHTML = trash;
+        el.onclick = (e) => {
+            e.stopPropagation();
+            this.noTarget = false;
+            state.selectedCoordPaths
+                .sort((a, b) => b.localeCompare(a, "en", { numeric: true }))
+                .forEach((id) => state.feature.removeCoordinate(id));
+            this.fireUpdate();
+            this.marker?.remove()
+            this.marker = undefined;
+        }
+        const pixelPoint = this.map.project(e.featureTarget.geometry.coordinates)
+        const markerPos = this.map.unproject([pixelPoint.x + 48, pixelPoint.y])
+        this.marker = new Marker({element: el, draggable: false}).setLngLat(markerPos).addTo(this.map);
+    }
 
   onFeature(state, e) {
     if (state.selectedCoordPaths.length === 0) this.startDragging(state, e);
     else this.stopDragging(state);
   }
 
+  private noTarget = false
+
   // Click handlers
-  clickNoTarget() {
-    this.changeMode(modes.simple_select);
+  clickNoTarget(e) {
+    this.noTarget = true;
+    setTimeout(() => {
+        if (this.noTarget) {
+            this.marker?.remove()
+            this.marker = undefined;
+            this.changeMode(modes.simple_select);
+        }
+    },10)
   }
 
   clickInactive() {
@@ -165,6 +237,7 @@ export class DirectSelect extends ModeBase implements ModeInterface {
   }
 
   clickActiveFeature(state) {
+    this.marker?.remove()
     state.selectedCoordPaths = [];
     this.clearSelectedCoordinates();
     state.feature.changed();
@@ -216,14 +289,14 @@ export class DirectSelect extends ModeBase implements ModeInterface {
   }
 
   onClick(state, e) {
-    if (noTarget(e)) return this.clickNoTarget();
+    if (noTarget(e)) return this.clickNoTarget(e);
     if (isActiveFeature(e)) return this.clickActiveFeature(state);
     if (isInactiveFeature(e)) return this.clickInactive();
     this.stopDragging(state);
   }
 
   onTap(state, e) {
-    if (noTarget(e)) return this.clickNoTarget();
+    if (noTarget(e)) return this.clickNoTarget(e);
     if (isActiveFeature(e)) return this.clickActiveFeature(state, );
     if (isInactiveFeature(e)) return this.clickInactive();
   }
