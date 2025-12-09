@@ -1,5 +1,5 @@
 {
-  "name": "@birkskyum/maplibre-gl-draw",
+  "name": "@jsr/birkskyum__maplibre-gl-draw",
   "description": "A drawing component for MapLibre GL JS",
   "author": "Birk Skyum",
   "license": "ISC",
@@ -14,10 +14,12 @@
   "main": "dist/maplibre-gl-draw.js",
   "exports": {
     ".": {
-      "import": "./dist/maplibre-gl-draw.js"
+      "types": "./_dist/src/index.d.ts",
+      "default": "./src/index.js"
     },
     "./dist/maplibre-gl-draw.css": "./dist/maplibre-gl-draw.css"
   },
+  "_jsr_revision": 11,
   "files": [
     "dist/*",
     "src/"
