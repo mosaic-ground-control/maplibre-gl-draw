@@ -15,7 +15,7 @@
   "version": "2.1.2",
   "exports": {
     ".": {
-      "types": "./_dist/src/index.d.ts",
+      "types": "./dist/src/index.d.ts",
       "default": "./src/index.js"
     },
     "./dist/maplibre-gl-draw.css": "./dist/maplibre-gl-draw.css"
