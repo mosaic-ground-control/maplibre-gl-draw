@@ -12,6 +12,7 @@
     "url": "https://github.com/birkskyum/maplibre-gl-draw/issues"
   },
   "main": "dist/maplibre-gl-draw.js",
+  "version": "2.1.2",
   "exports": {
     ".": {
       "types": "./_dist/src/index.d.ts",
