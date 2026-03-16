@@ -285,8 +285,8 @@ export class DrawStore {
   }
 
   getInitialConfigValue(interaction: string): boolean {
-    if (this._mapInitialConfig[interaction] !== undefined) {
-      return this._mapInitialConfig[interaction];
+    if (interaction in this._mapInitialConfig) {
+      return !!this._mapInitialConfig[interaction];
     } else {
       return true;
     }
