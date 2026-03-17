@@ -328,6 +328,11 @@ export class DirectSelect extends ModeBase implements ModeInterface {
   }
 
   onStop() {
+    if (this.marker) {
+      this.marker.remove()
+      this.marker = undefined;
+    }
+
     doubleClickZoom.enable(this);
     this.clearSelectedCoordinates();
   }
