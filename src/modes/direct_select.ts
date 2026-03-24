@@ -290,14 +290,14 @@ export class DirectSelect extends ModeBase implements ModeInterface {
 
   onClick(state, e) {
     if (noTarget(e)) return this.clickNoTarget(e);
-    if (isActiveFeature(e)) return this.clickActiveFeature(state);
+    if (isActiveFeature(e) && !this.isClickOnMarker(e)) return this.clickActiveFeature(state);
     if (isInactiveFeature(e)) return this.clickInactive();
     this.stopDragging(state);
   }
 
   onTap(state, e) {
     if (noTarget(e)) return this.clickNoTarget(e);
-    if (isActiveFeature(e)) return this.clickActiveFeature(state, );
+    if (isActiveFeature(e) && !this.isClickOnMarker(e)) return this.clickActiveFeature(state, );
     if (isInactiveFeature(e)) return this.clickInactive();
   }
 
@@ -366,6 +366,12 @@ export class DirectSelect extends ModeBase implements ModeInterface {
       push(geojson);
     }
     this.fireActionable(state);
+  }
+
+  isClickOnMarker(e) {
+    if (!this.marker) return false;
+
+    return e.originalEvent.target.closest('.maplibregl-marker') === this.marker.getElement();
   }
 }
 
