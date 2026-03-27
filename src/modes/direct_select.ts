@@ -198,7 +198,7 @@ export class DirectSelect extends ModeBase implements ModeInterface {
             el.style.color = "white"
         }
         el.innerHTML = trash;
-        el.onclick = (e) => {
+        const click = (e) => {
             e.stopPropagation();
             this.noTarget = false;
             state.selectedCoordPaths
@@ -208,6 +208,9 @@ export class DirectSelect extends ModeBase implements ModeInterface {
             this.marker?.remove()
             this.marker = undefined;
         }
+        el.onclick = click
+        el.ontouchstart = click
+
         const pixelPoint = this.map.project(e.featureTarget.geometry.coordinates)
         const markerPos = this.map.unproject([pixelPoint.x + 48, pixelPoint.y])
         this.marker = new Marker({element: el, draggable: false}).setLngLat(markerPos).addTo(this.map);
@@ -303,7 +306,7 @@ export class DirectSelect extends ModeBase implements ModeInterface {
 
   onTouchStart(state, e) {
     if (isVertex(e)) return this.onVertex(state, e);
-    if (isActiveFeature(e)) return this.onFeature(state, e);
+    if (isActiveFeature(e) && !this.isClickOnMarker(e)) return this.onFeature(state, e);
     if (isMidpoint(e)) return this.onMidpoint(state, e);
   }
 
